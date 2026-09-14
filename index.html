@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0e0b1a">
+<meta name="description" content="Houd de tel bij van Sip, Saf en al de rest. Werkt offline, alles lokaal opgeslagen.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Teller">
+<title>Teller — Sip &amp; Saf</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>Teller</h1>
+    <p id="subtitle">Sip &amp; Saf</p>
+  </div>
+  <button id="btn-menu" class="icon-btn" type="button" aria-label="Menu" aria-haspopup="true" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+  </button>
+  <div id="menu" class="menu" role="menu" hidden>
+    <button type="button" role="menuitem" data-action="reset-all">Alles op nul</button>
+    <button type="button" role="menuitem" data-action="export">Exporteren (JSON)</button>
+    <button type="button" role="menuitem" data-action="import">Importeren (JSON)</button>
+    <button type="button" role="menuitem" class="danger" data-action="wipe">Alles wissen</button>
+  </div>
+</header>
+
+<main>
+  <ul id="list" class="counters" aria-label="Tellers"></ul>
+  <p id="empty" class="empty" hidden>Nog geen tellers.<br><span>Tik op <b>+</b> om er eentje bij te maken.</span></p>
+  <p class="total" id="total"></p>
+</main>
+
+<button id="btn-add" class="fab" type="button" aria-label="Teller toevoegen">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<dialog id="dlg-counter">
+  <form method="dialog" id="form-counter">
+    <h2 id="dlg-title">Nieuwe teller</h2>
+    <label for="f-name">Naam</label>
+    <input id="f-name" name="name" type="text" maxlength="24" required autocomplete="off" placeholder="bv. Sip">
+    <label for="f-step">Stap</label>
+    <input id="f-step" name="step" type="number" min="1" max="999" step="1" value="1" inputmode="numeric">
+    <fieldset class="swatches">
+      <legend>Kleur</legend>
+      <div id="f-colors" class="swatch-row"></div>
+    </fieldset>
+    <menu class="dlg-actions">
+      <button value="cancel" type="submit" class="ghost" formnovalidate>Annuleren</button>
+      <button value="save" type="submit" class="primary">Bewaren</button>
+    </menu>
+  </form>
+</dialog>
+
+<input id="file-import" type="file" accept="application/json,.json" hidden>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

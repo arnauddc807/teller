@@ -340,6 +340,29 @@
   });
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    window.addEventListener('load', async () => {
+      let reg;
+      try {
+        reg = await navigator.serviceWorker.register('sw.js');
+      } catch {
+        return;
+      }
+
+      // Meld een nieuwe deploy zodra die klaarstaat, i.p.v. stilletjes oud te blijven.
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if (!sw || !navigator.serviceWorker.controller) return;
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'installed') {
+            showToast('Nieuwe versie beschikbaar', 'Herladen', () => location.reload());
+          }
+        });
+      });
+
+      // Kijk of er een update is wanneer je terugkomt in de app.
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+    });
   }
 })();

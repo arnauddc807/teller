@@ -1,4 +1,4 @@
-const CACHE = 'teller-v1';
+const CACHE = 'teller-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -6,10 +6,16 @@ const ASSETS = [
   './app.js',
   './manifest.webmanifest',
   './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -20,21 +26,37 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Cache-first: de app is volledig statisch en moet offline werken.
+// Omzeil de HTTP-cache bij revalidatie: GitHub Pages zet max-age op assets,
+// waardoor een nieuwe deploy anders tot 10 minuten onzichtbaar blijft.
+const revalidate = (request) => fetch(request, { cache: 'no-cache' });
+
+function put(request, response) {
+  if (response && response.ok && response.type === 'basic') {
+    const copy = response.clone();
+    caches.open(CACHE).then((c) => c.put(request, copy));
+  }
+  return response;
+}
+
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  const { request } = e;
+  if (request.method !== 'GET' || new URL(request.url).origin !== location.origin) return;
+
+  // Navigatie: network-first, zodat een nieuwe deploy meteen zichtbaar is.
+  if (request.mode === 'navigate') {
+    e.respondWith(
+      revalidate(request)
+        .then((res) => put(request, res))
+        .catch(() => caches.match(request).then((hit) => hit || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Overige bestanden: stale-while-revalidate — snel uit cache, op de achtergrond verversen.
   e.respondWith(
-    caches.match(e.request).then((hit) =>
-      hit ||
-      fetch(e.request)
-        .then((res) => {
-          if (res.ok && new URL(e.request.url).origin === location.origin) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match('./index.html'))
-    )
+    caches.match(request).then((hit) => {
+      const network = revalidate(request).then((res) => put(request, res)).catch(() => hit);
+      return hit || network;
+    })
   );
 });

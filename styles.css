@@ -115,6 +115,16 @@ body{
 }
 .value.bump{animation:bump .18s ease-out}
 
+.cost{
+  position:relative;
+  margin:12px 0 0;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.cost[hidden]{display:none}
+
 .empty{margin:40px 0;text-align:center;color:var(--muted);line-height:1.8}
 .empty span{font-size:14px}
 .total{margin:22px 0 0;text-align:center;color:var(--muted);font-size:13px;font-weight:600}

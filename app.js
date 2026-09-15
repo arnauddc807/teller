@@ -15,11 +15,12 @@
   const form = $('#form-counter');
   const fName = $('#f-name');
   const fStep = $('#f-step');
+  const fPrice = $('#f-price');
   const fColors = $('#f-colors');
   const toast = $('#toast');
   const fileInput = $('#file-import');
 
-  /** @type {{id:string,name:string,count:number,step:number,color:string}[]} */
+  /** @type {{id:string,name:string,count:number,step:number,color:string,price:number}[]} */
   let counters = [];
   let editingId = null;
   let pickedColor = COLORS[0];
@@ -28,9 +29,24 @@
   const uid = () =>
     (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 
+  const euro = new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' });
+
+  // Reken in centen: 0.1 + 0.2 is in floats niet 0.3, en bij een rekening telt dat op.
+  const toCents = (price) => Math.round((Number(price) || 0) * 100);
+  const money = (cents) => euro.format(cents / 100);
+
+  // Aanvaardt zowel "2,50" als "2.50", en negeert een euroteken.
+  function parsePrice(input) {
+    const n = parseFloat(String(input).replace(/[^\d.,-]/g, '').replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0;
+  }
+
+  const costOf = (c) => toCents(c.price) * c.count;
+  const totalCents = () => counters.reduce((sum, c) => sum + costOf(c), 0);
+
   const defaults = () => [
-    { id: uid(), name: 'Sip', count: 0, step: 1, color: COLORS[0] },
-    { id: uid(), name: 'Saf', count: 0, step: 1, color: COLORS[1] },
+    { id: uid(), name: 'Sip', count: 0, step: 1, color: COLORS[0], price: 0 },
+    { id: uid(), name: 'Saf', count: 0, step: 1, color: COLORS[1], price: 0 },
   ];
 
   // ---------- opslag (localStorage) ----------
@@ -44,6 +60,7 @@
         count: Number.isFinite(+c.count) ? Math.trunc(+c.count) : 0,
         step: Math.min(999, Math.max(1, Math.trunc(+c.step) || 1)),
         color: COLORS.includes(c.color) ? c.color : COLORS[0],
+        price: parsePrice(c.price),
       }));
     return clean;
   }
@@ -101,11 +118,16 @@
     for (const c of counters) list.append(cardFor(c));
 
     empty.hidden = counters.length > 0;
-    const total = counters.reduce((sum, c) => sum + c.count, 0);
-    totalEl.textContent = counters.length ? `Totaal: ${total}` : '';
+    totalEl.textContent = counters.length ? totalText() : '';
     subtitle.textContent = counters.length
       ? counters.map((c) => c.name).slice(0, 3).join(' · ') + (counters.length > 3 ? ' · …' : '')
       : 'Sip & Saf';
+  }
+
+  function totalText() {
+    const total = counters.reduce((sum, c) => sum + c.count, 0);
+    const cents = totalCents();
+    return cents > 0 ? `Totaal: ${total} · ${money(cents)}` : `Totaal: ${total}`;
   }
 
   function cardFor(c) {
@@ -135,14 +157,23 @@
         <button class="step plus" type="button" data-act="inc" aria-label="Eén meer">
           ${svg('<path d="M12 5v14M5 12h14"/>')}
         </button>
-      </div>`;
+      </div>
+      <p class="cost" hidden></p>`;
 
     li.querySelector('.counter-name').textContent = c.name;
     const out = li.querySelector('.value');
     out.textContent = c.count;
     out.setAttribute('aria-label', `${c.name}: ${c.count}`);
     li.querySelector('.minus').disabled = c.count <= 0;
+    paintCost(li, c);
     return li;
+  }
+
+  function paintCost(li, c) {
+    const el = li.querySelector('.cost');
+    const cents = toCents(c.price);
+    el.hidden = cents === 0;
+    el.textContent = cents === 0 ? '' : `${c.count} × ${money(cents)} = ${money(cents * c.count)}`;
   }
 
   function updateCard(c) {
@@ -155,8 +186,8 @@
     void out.offsetWidth; // herstart de animatie
     out.classList.add('bump');
     li.querySelector('.minus').disabled = c.count <= 0;
-    const total = counters.reduce((sum, x) => sum + x.count, 0);
-    totalEl.textContent = `Totaal: ${total}`;
+    paintCost(li, c);
+    totalEl.textContent = totalText();
   }
 
   // ---------- acties ----------
@@ -231,6 +262,7 @@
     $('#dlg-title').textContent = c ? 'Teller bewerken' : 'Nieuwe teller';
     fName.value = c ? c.name : '';
     fStep.value = c ? c.step : 1;
+    fPrice.value = c && c.price ? c.price.toFixed(2).replace('.', ',') : '';
     pickedColor = c ? c.color : COLORS[counters.length % COLORS.length];
     paintSwatches();
     dlg.showModal();
@@ -241,12 +273,13 @@
     if (e.submitter && e.submitter.value === 'cancel') return;
     const name = fName.value.trim().slice(0, 24) || 'Teller';
     const step = Math.min(999, Math.max(1, Math.trunc(+fStep.value) || 1));
+    const price = parsePrice(fPrice.value);
 
     if (editingId) {
       const c = counters.find((x) => x.id === editingId);
-      if (c) Object.assign(c, { name, step, color: pickedColor });
+      if (c) Object.assign(c, { name, step, color: pickedColor, price });
     } else {
-      counters.push({ id: uid(), name, count: 0, step, color: pickedColor });
+      counters.push({ id: uid(), name, count: 0, step, color: pickedColor, price });
     }
     save();
     render();

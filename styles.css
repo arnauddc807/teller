@@ -117,17 +117,45 @@ body{
 
 .cost{
   position:relative;
+  display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap;
   margin:12px 0 0;
-  text-align:center;
-  color:var(--muted);
-  font-size:13px;font-weight:600;
   font-variant-numeric:tabular-nums;
+}
+.cost-calc{color:var(--muted);font-size:12px;font-weight:600}
+.cost-sum{
+  color:var(--text);
+  font-size:19px;font-weight:800;letter-spacing:-.01em;
 }
 .cost[hidden]{display:none}
 
 .empty{margin:40px 0;text-align:center;color:var(--muted);line-height:1.8}
 .empty span{font-size:14px}
-.total{margin:22px 0 0;text-align:center;color:var(--muted);font-size:13px;font-weight:600}
+.summary{
+  display:flex;align-items:center;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;
+  margin:18px 0 0;padding:16px 18px;
+  border:1px solid var(--card-brd);border-radius:var(--radius);
+  background:linear-gradient(135deg,#7c5cff26,#ff3d8b1f);
+}
+.summary[hidden]{display:none}
+.summary-main{min-width:0}
+.summary-label{
+  margin:0;
+  color:var(--muted);font-size:12px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.summary-amount{
+  margin:2px 0 0;
+  font-size:clamp(24px,7vw,32px);font-weight:800;line-height:1.1;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+}
+.summary-amount[hidden]{display:none}
+.summary-count{
+  margin:0;flex:none;
+  color:var(--muted);font-size:15px;font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+/* Zonder prijzen is het aantal de hoofdzaak, dus krijgt dat de grote cijfers. */
+.summary.no-money .summary-count{font-size:26px;color:var(--text)}
 
 /* ---------- fab ---------- */
 .fab{

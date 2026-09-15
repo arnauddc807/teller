@@ -7,7 +7,9 @@
   const $ = (sel) => document.querySelector(sel);
   const list = $('#list');
   const empty = $('#empty');
-  const totalEl = $('#total');
+  const summaryEl = $('#summary');
+  const summaryAmount = $('#summary-amount');
+  const summaryCount = $('#summary-count');
   const subtitle = $('#subtitle');
   const menu = $('#menu');
   const btnMenu = $('#btn-menu');
@@ -118,16 +120,25 @@
     for (const c of counters) list.append(cardFor(c));
 
     empty.hidden = counters.length > 0;
-    totalEl.textContent = counters.length ? totalText() : '';
+    paintSummary();
     subtitle.textContent = counters.length
       ? counters.map((c) => c.name).slice(0, 3).join(' · ') + (counters.length > 3 ? ' · …' : '')
       : 'Sip & Saf';
   }
 
-  function totalText() {
+  function paintSummary() {
+    summaryEl.hidden = counters.length === 0;
+    if (!counters.length) return;
+
     const total = counters.reduce((sum, c) => sum + c.count, 0);
-    const cents = totalCents();
-    return cents > 0 ? `Totaal: ${total} · ${money(cents)}` : `Totaal: ${total}`;
+    // Het bedrag hangt af van ingestelde prijzen, niet van de stand: staat alles
+    // op nul, dan hoort er € 0,00 te staan in plaats van niets.
+    const hasPrice = counters.some((c) => toCents(c.price) > 0);
+
+    summaryAmount.hidden = !hasPrice;
+    summaryAmount.textContent = money(totalCents());
+    summaryCount.textContent = `${total} ${total === 1 ? 'stuk' : 'stuks'}`;
+    summaryEl.classList.toggle('no-money', !hasPrice);
   }
 
   function cardFor(c) {
@@ -158,7 +169,10 @@
           ${svg('<path d="M12 5v14M5 12h14"/>')}
         </button>
       </div>
-      <p class="cost" hidden></p>`;
+      <p class="cost" hidden>
+        <span class="cost-calc"></span>
+        <span class="cost-sum"></span>
+      </p>`;
 
     li.querySelector('.counter-name').textContent = c.name;
     const out = li.querySelector('.value');
@@ -170,10 +184,13 @@
   }
 
   function paintCost(li, c) {
-    const el = li.querySelector('.cost');
     const cents = toCents(c.price);
-    el.hidden = cents === 0;
-    el.textContent = cents === 0 ? '' : `${c.count} × ${money(cents)} = ${money(cents * c.count)}`;
+    const row = li.querySelector('.cost');
+
+    row.hidden = cents === 0;
+    if (cents === 0) return;
+    li.querySelector('.cost-calc').textContent = `${c.count} × ${money(cents)}`;
+    li.querySelector('.cost-sum').textContent = money(cents * c.count);
   }
 
   function updateCard(c) {
@@ -187,7 +204,7 @@
     out.classList.add('bump');
     li.querySelector('.minus').disabled = c.count <= 0;
     paintCost(li, c);
-    totalEl.textContent = totalText();
+    paintSummary();
   }
 
   // ---------- acties ----------

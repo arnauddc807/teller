@@ -36,7 +36,13 @@
 <main>
   <ul id="list" class="counters" aria-label="Tellers"></ul>
   <p id="empty" class="empty" hidden>Nog geen tellers.<br><span>Tik op <b>+</b> om er eentje bij te maken.</span></p>
-  <p class="total" id="total"></p>
+  <section id="summary" class="summary" aria-label="Totaal" hidden>
+    <div class="summary-main">
+      <p class="summary-label">Totaal</p>
+      <p class="summary-amount" id="summary-amount"></p>
+    </div>
+    <p class="summary-count" id="summary-count"></p>
+  </section>
 </main>
 
 <button id="btn-add" class="fab" type="button" aria-label="Teller toevoegen">

@@ -1,4 +1,4 @@
-const CACHE = 'teller-v2';
+const CACHE = 'teller-v3';
 const ASSETS = [
   './',
   './index.html',
